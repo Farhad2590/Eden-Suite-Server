@@ -1,21 +1,25 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion,ObjectId } = require('mongodb');
+const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 
 
-const port = process.env.PORT || 9000;
+const port = process.env.PORT || 5000;
 
 const app = express()
 
 
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
-  credential: true,
+  origin: ['http://localhost:5173',
+    'http://localhost:5174',],
+  credentials: true,
   optionSuccessStatus: 200,
 }
 app.use(cors(corsOptions))
 app.use(express.json())
+app.use(cookieParser())
 
 
 
@@ -37,12 +41,44 @@ async function run() {
     // await client.connect();
     // Send a ping to confirm a successful connection
     const roomsCollection = client.db('edenSuite').collection('edenSuiteRoom')
+    const bookingCollection = client.db('edenSuite').collection('edenSuiteBooking')
+
+    //jwt generator
+    app.post('/jwt', async (req, res) => {
+      const user = req.body
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: '7d'
+      })
+      console.log(token);
+      res
+        .cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        })
+        .send({ success: true })
+    })
+
     // Get all Rooms data from db
     app.get('/rooms', async (req, res) => {
       const result = await roomsCollection.find().toArray()
 
       res.send(result)
     })
+
+    // app.get('/rooms', async (req, res) => {
+    //   const sort = req.query.sort;
+
+    //   let options = {};
+    //   if (sort === 'asc' || sort === 'desc') {
+    //     options.sort = { price_per_night: sort === 'asc' ? 1 : -1 };
+    //   }
+    //   const result = await roomsCollection.find({}, options).toArray();
+    //   res.send(result);
+
+    // });
+
+
     // Get a single rooms data from db using room id
     app.get('/rooms/:id', async (req, res) => {
       const id = req.params.id
@@ -50,9 +86,36 @@ async function run() {
       const result = await roomsCollection.findOne(query)
       res.send(result)
     })
+
     
-    
-    await client.db("admin").command({ ping: 1 });
+    app.put('/rooms/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true }
+      const updateProducts = req.body;
+      const products = {
+          $set: {
+            bookingFrom : updateProducts.bookingFrom,
+            availability : updateProducts.availability,
+            bookingTo : updateProducts.bookingTo,
+            email : updateProducts.email,
+            name : updateProducts.name,
+          }
+      }
+      const result = await roomsCollection.updateOne(filter,products,options)
+      console.log(result);
+      res.send(result)
+  })
+
+    app.post('/bookings', async (req, res) => {
+      const newProduct = req.body;
+      console.log(newProduct);
+      const result = await bookingCollection.insertOne(newProduct)
+      res.send(result)
+  })
+
+
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
