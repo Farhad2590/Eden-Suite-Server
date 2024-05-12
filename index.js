@@ -41,7 +41,8 @@ async function run() {
     // await client.connect();
     // Send a ping to confirm a successful connection
     const roomsCollection = client.db('edenSuite').collection('edenSuiteRoom')
-    const bookingCollection = client.db('edenSuite').collection('edenSuiteBooking')
+    const reviewCollection = client.db('edenSuite').collection('edenSuiteReview')
+
 
     //jwt generator
     app.post('/jwt', async (req, res) => {
@@ -87,32 +88,34 @@ async function run() {
       res.send(result)
     })
 
-    
+
     app.put('/rooms/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) }
       const options = { upsert: true }
       const updateProducts = req.body;
       const products = {
-          $set: {
-            bookingFrom : updateProducts.bookingFrom,
-            availability : updateProducts.availability,
-            bookingTo : updateProducts.bookingTo,
-            email : updateProducts.email,
-            name : updateProducts.name,
-          }
+        $set: {
+          bookingFrom: updateProducts.bookingFrom,
+          availability: updateProducts.availability,
+          bookingTo: updateProducts.bookingTo,
+          email: updateProducts.email,
+          name: updateProducts.name,
+        }
       }
-      const result = await roomsCollection.updateOne(filter,products,options)
-      console.log(result);
+      const result = await roomsCollection.updateOne(filter, products, options)
+      // console.log(result);
       res.send(result)
-  })
+    })
 
-    app.post('/bookings', async (req, res) => {
-      const newProduct = req.body;
-      console.log(newProduct);
-      const result = await bookingCollection.insertOne(newProduct)
+    app.get('/myBooking/:email', async (req, res) => {
+      console.log(req.params.email);
+      const result = await roomsCollection.find({ email: req.params.email }).toArray();
       res.send(result)
-  })
+    })
+
+
+
 
 
     // await client.db("admin").command({ ping: 1 });
