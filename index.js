@@ -114,7 +114,12 @@ async function run() {
       res.send(result)
     })
 
-
+    app.post('/review', async (req, res) => {
+      const newProduct = req.body;
+      console.log(newProduct);
+      const result = await reviewCollection.insertOne(newProduct)
+      res.send(result)
+  })
 
 
 
