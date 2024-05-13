@@ -119,7 +119,13 @@ async function run() {
       console.log(newProduct);
       const result = await reviewCollection.insertOne(newProduct)
       res.send(result)
-  })
+    })
+    // Get all review data from db
+    app.get('/review', async (req, res) => {
+      const result = await reviewCollection.find().sort({ timestamp: -1 }).toArray();
+
+      res.send(result)
+    })
 
 
 
