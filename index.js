@@ -42,6 +42,7 @@ async function run() {
     // Send a ping to confirm a successful connection
     const roomsCollection = client.db('edenSuite').collection('edenSuiteRoom')
     const reviewCollection = client.db('edenSuite').collection('edenSuiteReview')
+    const roomsBooking = client.db('edenSuite').collection('edenSuiteBooking')
 
 
     //jwt generator
@@ -89,31 +90,6 @@ async function run() {
     })
 
 
-    app.put('/rooms/:id', async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) }
-      const options = { upsert: true }
-      const updateProducts = req.body;
-      const products = {
-        $set: {
-          bookingFrom: updateProducts.bookingFrom,
-          availability: updateProducts.availability,
-          bookingTo: updateProducts.bookingTo,
-          email: updateProducts.email,
-          name: updateProducts.name,
-        }
-      }
-      const result = await roomsCollection.updateOne(filter, products, options)
-      // console.log(result);
-      res.send(result)
-    })
-
-    app.get('/myBooking/:email', async (req, res) => {
-      console.log(req.params.email);
-      const result = await roomsCollection.find({ email: req.params.email }).toArray();
-      res.send(result)
-    })
-
     app.post('/review', async (req, res) => {
       const newProduct = req.body;
       console.log(newProduct);
@@ -123,11 +99,95 @@ async function run() {
     // Get all review data from db
     app.get('/review', async (req, res) => {
       const result = await reviewCollection.find().sort({ timestamp: -1 }).toArray();
-
       res.send(result)
     })
 
 
+    app.get('/myBooking/:email', async (req, res) => {
+      console.log(req.params.email);
+      const result = await roomsBooking.find({ email: req.params.email }).toArray();
+      res.send(result)
+    })
+
+    app.get('/myBooking', async (req, res) => {
+      const result = await roomsCollection.find().toArray()
+      res.send(result)
+    })
+
+    app.post('/mybooking', async (req, res) => {
+      const newProduct = req.body;
+      const result = await roomsBooking.insertOne(newProduct)
+      res.send(result)
+    })
+
+    app.delete('/mybooking/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await roomsBooking.deleteOne(query);
+      res.send(result);
+    })
+
+    app.put('/rooms/:bookingId', async (req, res) => {
+      const id = req.params.bookingId;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateData = {
+        $set: {
+          availability: 'unAvailable',
+           // Update any other fields here if needed
+        }
+      };
+      try {
+        const result = await roomsCollection.updateOne(filter, updateData);
+        console.log(result);
+        if (result.modifiedCount === 1) {
+          res.status(200).json({ message: "Update successful" });
+        } else {
+          res.status(404).json({ message: "Document not found or no modifications made" });
+        }
+      } catch (error) {
+        console.error("Error updating document:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+
+    app.put('/roomsdata/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateData = {
+        $set: {
+          availability: 'unAvailable', // Update any other fields here if needed
+        }
+      };
+      try {
+        const result = await roomsCollection.updateOne(filter, updateData);
+        console.log(result);
+        if (result.modifiedCount === 1) {
+          res.status(200).json({ message: "Update successful" });
+        } else {
+          res.status(404).json({ message: "Document not found or no modifications made" });
+        }
+      } catch (error) {
+        console.error("Error updating document:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    app.put('/rooms/:id', async (req, res) => {
+      const id = req.params.id
+      const BookData = req.body
+      const query = { _id: new ObjectId(id) }
+      const options = { upsert: true }
+      const updateDoc = {
+        $set: {
+          ...BookData,
+        },
+      }
+      const result = await roomsBooking.updateOne(query, updateDoc, options)
+      res.send(result)
+    })
 
     // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
