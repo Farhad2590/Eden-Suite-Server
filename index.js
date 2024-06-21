@@ -116,9 +116,34 @@ async function run() {
 
     app.post('/mybooking', async (req, res) => {
       const newProduct = req.body;
+      console.log(newProduct.bookingId);
       const result = await roomsBooking.insertOne(newProduct)
+
       res.send(result)
     })
+
+    // app.post('/mybooking', async (req, res) => {
+    //   const newProduct = req.body;
+
+    //   try {
+    //     // Insert into roomsBooking collection
+    //     const bookingResult = await roomsBooking.insertOne(newProduct);
+
+    //     // Update another collection
+    //     const query = {
+    //       _id: {
+    //         $in: newProduct.bookingId.map(id => new ObjectId(id))
+    //       }
+    //     };
+    //     console.log(query);
+    //     // const updateResult = await roomsCollection.updateMany(query, { $set: { availability: 'unAvailable' } });
+
+    //     res.send({ bookingResult, updateResult });
+    //   } catch (error) {
+    //     res.status(500).send({ error: error.message });
+    //   }
+    // });
+
 
     app.delete('/mybooking/:id', async (req, res) => {
       const id = req.params.id;
@@ -131,24 +156,17 @@ async function run() {
       const id = req.params.bookingId;
       console.log(id);
       const filter = { _id: new ObjectId(id) };
+      console.log(filter);
       const updateData = {
         $set: {
           availability: 'unAvailable',
-           // Update any other fields here if needed
+          // Update any other fields here if needed
         }
       };
-      try {
-        const result = await roomsCollection.updateOne(filter, updateData);
-        console.log(result);
-        if (result.modifiedCount === 1) {
-          res.status(200).json({ message: "Update successful" });
-        } else {
-          res.status(404).json({ message: "Document not found or no modifications made" });
-        }
-      } catch (error) {
-        console.error("Error updating document:", error);
-        res.status(500).json({ error: "Internal server error" });
-      }
+      const result = await roomsCollection.updateOne(filter, updateData);
+      console.log(result);
+      res.send(result)
+
     });
 
 
@@ -158,21 +176,12 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const updateData = {
         $set: {
-          availability: 'unAvailable', // Update any other fields here if needed
+          availability: 'Available', // Update any other fields here if needed
         }
       };
-      try {
-        const result = await roomsCollection.updateOne(filter, updateData);
-        console.log(result);
-        if (result.modifiedCount === 1) {
-          res.status(200).json({ message: "Update successful" });
-        } else {
-          res.status(404).json({ message: "Document not found or no modifications made" });
-        }
-      } catch (error) {
-        console.error("Error updating document:", error);
-        res.status(500).json({ error: "Internal server error" });
-      }
+      const result = await roomsCollection.updateOne(filter, updateData);
+      console.log(result);
+      res.send(result)
     });
 
     app.put('/rooms/:id', async (req, res) => {
