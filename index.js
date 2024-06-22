@@ -13,7 +13,8 @@ const app = express()
 
 const corsOptions = {
   origin: ['http://localhost:5173',
-    'http://localhost:5174',],
+    'http://localhost:5174',
+  'https://b9a11-client-side-farhad2590.web.app'],
   credentials: true,
   optionSuccessStatus: 200,
 }
@@ -109,8 +110,10 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/myBooking', async (req, res) => {
-      const result = await roomsCollection.find().toArray()
+    app.get('/myBooking/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await roomsBooking.find(query).toArray()
       res.send(result)
     })
 
@@ -122,27 +125,27 @@ async function run() {
       res.send(result)
     })
 
-    // app.post('/mybooking', async (req, res) => {
-    //   const newProduct = req.body;
+    app.post('/mybooking', async (req, res) => {
+      const newProduct = req.body;
 
-    //   try {
-    //     // Insert into roomsBooking collection
-    //     const bookingResult = await roomsBooking.insertOne(newProduct);
+      try {
+        // Insert into roomsBooking collection
+        const bookingResult = await roomsBooking.insertOne(newProduct);
 
-    //     // Update another collection
-    //     const query = {
-    //       _id: {
-    //         $in: newProduct.bookingId.map(id => new ObjectId(id))
-    //       }
-    //     };
-    //     console.log(query);
-    //     // const updateResult = await roomsCollection.updateMany(query, { $set: { availability: 'unAvailable' } });
+        // Update another collection
+        const query = {
+          _id: {
+            $in: newProduct.bookingId.map(id => new ObjectId(id))
+          }
+        };
+        console.log(query);
+        // const updateResult = await roomsCollection.updateMany(query, { $set: { availability: 'unAvailable' } });
 
-    //     res.send({ bookingResult, updateResult });
-    //   } catch (error) {
-    //     res.status(500).send({ error: error.message });
-    //   }
-    // });
+        res.send({ bookingResult, updateResult });
+      } catch (error) {
+        res.status(500).send({ error: error.message });
+      }
+    });
 
 
     app.delete('/mybooking/:id', async (req, res) => {
@@ -172,17 +175,32 @@ async function run() {
 
     app.put('/roomsdata/:id', async (req, res) => {
       const id = req.params.id;
-      console.log(id);
-      const filter = { _id: new ObjectId(id) };
-      const updateData = {
-        $set: {
-          availability: 'Available', // Update any other fields here if needed
-        }
-      };
-      const result = await roomsCollection.updateOne(filter, updateData);
-      console.log(result);
+      const BookData = req.body
+      const query = { _id: new ObjectId(id) }
+      const options = { upsert: true }
+      const updateDoc = {
+          $set: {
+              ...BookData,
+          },
+      }
+      const result = await roomsBooking.updateOne(query, updateDoc, options)
       res.send(result)
     });
+
+    // update a book in db
+    app.put('/book/:id', async (req, res) => {
+      const id = req.params.id
+      const BookData = req.body
+      const query = { _id: new ObjectId(id) }
+      const options = { upsert: true }
+      const updateDoc = {
+          $set: {
+              ...BookData,
+          },
+      }
+      const result = await roomsBooking.updateOne(query, updateDoc, options)
+      res.send(result)
+  })
 
     app.put('/rooms/:id', async (req, res) => {
       const id = req.params.id
