@@ -166,6 +166,20 @@ async function run() {
 
     });
 
+    app.put('/roomsCancel/:id', async (req, res) => {
+      const id = req.params.id;
+      const BookData = req.body
+      const query = { _id: new ObjectId(id) }
+      const options = { upsert: true }
+      const updateDoc = {
+        $set: {
+          ...BookData,
+        },
+      }
+      const result = await roomsCollection.updateOne(query, updateDoc, options)
+      res.send(result)
+    });
+
 
     app.put('/roomsdata/:id', async (req, res) => {
       const id = req.params.id;
