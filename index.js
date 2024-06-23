@@ -14,7 +14,7 @@ const app = express()
 const corsOptions = {
   origin: ['http://localhost:5173',
     'http://localhost:5174',
-  'https://b9a11-client-side-farhad2590.web.app'],
+    'https://b9a11-client-side-farhad2590.web.app'],
   credentials: true,
   optionSuccessStatus: 200,
 }
@@ -63,24 +63,25 @@ async function run() {
     })
 
     // Get all Rooms data from db
-    app.get('/rooms', async (req, res) => {
-      const result = await roomsCollection.find().toArray()
-
-      res.send(result)
-    })
-
     // app.get('/rooms', async (req, res) => {
-    //   const sort = req.query.sort;
+    //   const result = await roomsCollection.find().toArray()
 
-    //   let options = {};
-    //   if (sort === 'asc' || sort === 'desc') {
-    //     options.sort = { price_per_night: sort === 'asc' ? 1 : -1 };
-    //   }
-    //   const result = await roomsCollection.find({}, options).toArray();
-    //   res.send(result);
+    //   res.send(result)
+    // })
 
-    // });
+    app.get('/rooms', async (req, res) => {
+      const minPrice = parseFloat(req.query.minPrice) || 0;
+      const maxPrice = parseFloat(req.query.maxPrice) || Number.MAX_VALUE;
 
+
+      const query = {
+        price_per_night: { $gte: minPrice, $lte: maxPrice }
+      };
+
+      const result = await roomsCollection.find(query).toArray();
+      res.send(result);
+
+    });
 
     // Get a single rooms data from db using room id
     app.get('/rooms/:id', async (req, res) => {
@@ -179,9 +180,9 @@ async function run() {
       const query = { _id: new ObjectId(id) }
       const options = { upsert: true }
       const updateDoc = {
-          $set: {
-              ...BookData,
-          },
+        $set: {
+          ...BookData,
+        },
       }
       const result = await roomsBooking.updateOne(query, updateDoc, options)
       res.send(result)
@@ -194,13 +195,13 @@ async function run() {
       const query = { _id: new ObjectId(id) }
       const options = { upsert: true }
       const updateDoc = {
-          $set: {
-              ...BookData,
-          },
+        $set: {
+          ...BookData,
+        },
       }
       const result = await roomsBooking.updateOne(query, updateDoc, options)
       res.send(result)
-  })
+    })
 
     app.put('/rooms/:id', async (req, res) => {
       const id = req.params.id
